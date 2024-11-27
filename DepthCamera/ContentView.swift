@@ -11,23 +11,77 @@ import tiff_ios
 
 struct ContentView : View {
     @StateObject var arViewModel = ARViewModel()
+    @State private var showDepthMap: Bool = true
+    @State private var showConfidenceMap: Bool = true
     let previewCornerRadius: CGFloat = 15.0
     
     var body: some View {
         
         GeometryReader { geometry in
+            let width = geometry.size.width
+            let height = width * 4 / 3 // 4:3 aspect ratio
             ZStack {
                 // Make the entire background black.
                 Color.black.edgesIgnoringSafeArea(.all)
                 VStack {
+                    // コントロールパネルを上部に配置
+                    HStack(spacing: 0) {
+                        // Depthマップ用のコントロール
+                        VStack(alignment: .center) {
+                            Button(action: {
+                                showDepthMap.toggle()
+                            }) {
+                                Text("Depth")
+                                    .foregroundColor(.white)
+                                    .padding(6)
+                                    .background(
+                                        Color.black.opacity(showDepthMap ? 0.8 : 0.6)
+                                    )
+                                    .cornerRadius(8)
+                            }
+                            
+                            if showDepthMap, let depthImage = arViewModel.processedDepthImage {
+                                Image(uiImage: depthImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: width * 0.3, height: width * 0.3)
+                                    .opacity(0.8)
+                            }
+                        }
+                        
+                        // Confidenceマップ用のコントロール
+                        VStack(alignment: .center) {
+                            Button(action: {
+                                showConfidenceMap.toggle()
+                            }) {
+                                Text("Confidence")
+                                    .foregroundColor(.white)
+                                    .padding(6)
+                                    .background(
+                                        Color.black.opacity(showConfidenceMap ? 0.8 : 0.6)
+                                    )
+                                    .cornerRadius(8)
+                            }
+                            
+                            if showConfidenceMap, let confidenceImage = arViewModel.processedConfidenceImage {
+                                Image(uiImage: confidenceImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: width * 0.3, height: width * 0.3)
+                                    .opacity(0.8)
+                            }
+                        }
+                    }
+                    .padding(.top, 16)
                     
-                    let width = geometry.size.width
-                    let height = width * 4 / 3 // 4:3 aspect ratio
+                    Spacer()
+                    
+                    // メインのARView
                     ARViewContainer(arViewModel: arViewModel)
                         .clipShape(RoundedRectangle(cornerRadius: previewCornerRadius))
                         .frame(width: width, height: height)
-                    CaptureButtonPanelView(model: arViewModel,  width: geometry.size.width)
                     
+                    CaptureButtonPanelView(model: arViewModel, width: geometry.size.width)
                 }
             }
         }
